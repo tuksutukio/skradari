@@ -1,0 +1,1 @@
+fr24poll exclusion list. Add one ID per row.
