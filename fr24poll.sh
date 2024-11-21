@@ -57,6 +57,9 @@ do
 	FLIGHTDATA=$(curl -s $FEEDERURL | tr -d \")
 	FLIGHTDATA=$(echo $FLIGHTDATA | tr -d \")
 	
+	### FOR DEBUGGING! ###
+	echo $FLIGHTDATA > debug.txt
+	
 	# alarms for hijacking, mayday and radio loss
 	ALARM=0
 	
@@ -78,7 +81,7 @@ do
 		SPEECH="mayday [[slnc 500]] mayday [[slnc 500]] mayday"
 	fi
 	
-	# 7800
+	# 7500
 	if [[ "$FLIGHTDATA" == *",7500,"* ]]; then
 		echo "Hijack squawk detected!"
 		ALARM=1
