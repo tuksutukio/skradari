@@ -8,7 +8,7 @@ import urllib.request
 DUMP1090_URL      = "http://192.168.1.131/dump1090/data/aircraft.json"
 ADSB_FI_URL       = "https://opendata.adsb.fi/api/v2/hex/{hex}"
 ADSBDB_ROUTE_URL  = "https://api.adsbdb.com/v0/callsign/{callsign}"
-PLANESPOTTERS_URL = "https://www.planespotters.net/search?q={hex} "
+PLANESPOTTERS_URL = "https://www.planespotters.net/search?q={hex}"
 POLL_INTERVAL = 60
 
 VSPEED_THRESHOLD  = 300   # ft per poll to count as climbing/descending
@@ -77,7 +77,7 @@ def lookup_route(callsign):
     return ""
 
 
-def classify_intention(first_alt, last_alt, first_speed, last_speed):
+def classify_intention(first_alt, last_alt):
     try:
         fa, la = int(first_alt), int(last_alt)
         delta = la - fa
@@ -157,7 +157,7 @@ def main():
     print(f"Polling {DUMP1090_URL} every {POLL_INTERVAL}s")
 
     known         = {}   # hex -> aircraft dict
-    entry_state   = {}   # hex -> {alt, speed} at first appearance
+    entry_state   = {}   # hex -> {alt} at first appearance
     alt_history   = {}   # hex -> list of recent altitudes
     arrow_state   = {}   # hex -> current arrow ("↑", "↓", or "")
     ignored       = set()  # hex codes identified as ground vehicles
@@ -171,8 +171,14 @@ def main():
             time.sleep(POLL_INTERVAL)
             continue
 
-        # drop ignored ground vehicles that have left the feed
-        ignored -= ignored - set(current)
+        # keep only ignored contacts still present in the feed, and re-admit
+        # any that have since shown a callsign or type (real-aircraft traits
+        # a ground vehicle wouldn't have) so they resume being tracked
+        ignored &= set(current)
+        for hex_id in list(ignored):
+            ac = current[hex_id]
+            if ac["callsign"] or ac["type"]:
+                ignored.discard(hex_id)
 
         entered = set(current) - set(known) - ignored
         exited  = set(known)   - set(current)
@@ -181,6 +187,14 @@ def main():
 
         for hex_id in sorted(entered):
             ac = current[hex_id]
+
+            # ring the alarm immediately, before the (potentially slow)
+            # network lookups below delay it
+            squawk = ac["squawk"]
+            if squawk in ALARM_SQUAWKS:
+                bell()
+                print(f"\n{time.strftime('%d-%m-%Y %H:%M:%S')}")
+                print(f"*** {ALARM_SQUAWKS[squawk]} *** {format_aircraft(ac)}", flush=True)
 
             if not ac["type"]:
                 ac["type"] = lookup_type(hex_id)
@@ -197,27 +211,16 @@ def main():
                 ignored.add(hex_id)
                 continue
 
-            squawk = ac["squawk"]
-            if squawk in ALARM_SQUAWKS:
-                bell()
-                output_lines.append(f"*** {ALARM_SQUAWKS[squawk]} *** {format_aircraft(ac)}")
-
             output_lines.append(f"  + {format_aircraft(ac)}  {planespotters_url(ac)}")
             known[hex_id] = dict(ac)
-            entry_state[hex_id] = {
-                "alt":   ac["altitude"],
-                "speed": ac["speed"],
-            }
+            entry_state[hex_id] = {"alt": ac["altitude"]}
             alt_history[hex_id] = []
             arrow_state[hex_id] = ""
 
         for hex_id in sorted(exited):
             ac = known[hex_id]
             es = entry_state.get(hex_id, {})
-            intention = classify_intention(
-                es.get("alt"), ac["altitude"],
-                es.get("speed"), ac["speed"],
-            )
+            intention = classify_intention(es.get("alt"), ac["altitude"])
             suffix = f"  [{intention}]" if intention != "uncertain" else ""
             output_lines.append(f"  - {format_aircraft(ac)}{suffix}")
 
@@ -241,14 +244,17 @@ def main():
 
             if ac["altitude"] is None:
                 no_alt_count[hex_id] = no_alt_count.get(hex_id, 0) + 1
-                if no_alt_count[hex_id] >= 3:
+                looks_like_ground_vehicle = not ac["callsign"] and not ac["type"]
+                if looks_like_ground_vehicle and no_alt_count[hex_id] >= 3:
                     ignored.add(hex_id)
                     del known[hex_id]
                     entry_state.pop(hex_id, None)
                     alt_history.pop(hex_id, None)
                     arrow_state.pop(hex_id, None)
                     no_alt_count.pop(hex_id, None)
-                    continue
+                else:
+                    known[hex_id] = dict(ac)
+                continue
             else:
                 no_alt_count.pop(hex_id, None)
 
