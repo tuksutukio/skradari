@@ -22,6 +22,14 @@ hardcoded to the author's local receiver and must be edited to point at a differ
 There's no test suite or linter configured; verify changes by running the script against a
 live (or mocked) `dump1090` endpoint and watching the console output over a few poll cycles.
 
+`skywatch.py` is a companion one-shot script — `python3 skywatch.py` — for "what's in the air
+right now?" queries. It imports `fetch_aircraft`, `lookup_type`, `lookup_route`,
+`format_aircraft`, `planespotters_url`, `is_ground_vehicle`, and `ALARM_SQUAWKS` straight from
+`fr24.py` rather than duplicating them, does a single fetch, and prints a snapshot of current
+traffic. It does not depend on `fr24.py` being run or running — safe to invoke regardless of
+whether the poll loop happens to be up somewhere. Same `DUMP1090_URL` reachability requirement
+applies.
+
 ## Architecture
 
 Everything lives in `fr24.py` as one continuous poll loop (`main()`), driven by a handful of

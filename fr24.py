@@ -77,6 +77,10 @@ def lookup_route(callsign):
     return ""
 
 
+def is_ground_vehicle(ac):
+    return not ac["callsign"] and not ac["type"]
+
+
 def classify_intention(first_alt, last_alt):
     try:
         fa, la = int(first_alt), int(last_alt)
@@ -207,7 +211,7 @@ def main():
             except (TypeError, ValueError):
                 alt = None
 
-            if not ac["callsign"] and not ac["type"] and (alt is None or alt <= 100):
+            if is_ground_vehicle(ac) and (alt is None or alt <= 100):
                 ignored.add(hex_id)
                 continue
 
@@ -244,8 +248,7 @@ def main():
 
             if ac["altitude"] is None:
                 no_alt_count[hex_id] = no_alt_count.get(hex_id, 0) + 1
-                looks_like_ground_vehicle = not ac["callsign"] and not ac["type"]
-                if looks_like_ground_vehicle and no_alt_count[hex_id] >= 3:
+                if is_ground_vehicle(ac) and no_alt_count[hex_id] >= 3:
                     ignored.add(hex_id)
                     del known[hex_id]
                     entry_state.pop(hex_id, None)
