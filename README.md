@@ -8,6 +8,14 @@ with vertical-speed arrows and PlaneSpotters links.
 If you find this useful and/or have any comments or improvement ideas, never hesitate to
 let me know.
 
+## Hardware
+
+The receiver behind this is a 60cm dipole antenna on the roof — a modest, general-purpose
+antenna, not a purpose-built high-gain ADS-B setup. Normal range is roughly 100km; anything
+caught beyond that is opportunistic (favorable conditions, high-altitude aircraft with clear
+line of sight) rather than expected. A sparse or empty snapshot is normal, not a sign
+something's broken.
+
 ## Requirements
 
 Python 3, no external dependencies (see `requirements.txt`). Requires a reachable
