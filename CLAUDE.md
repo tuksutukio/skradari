@@ -39,7 +39,10 @@ module-level constants at the top of the file (`DUMP1090_URL`, poll/threshold tu
 `fetch_aircraft()` filters out any hex code listed in `mute.txt` (`load_mute_list()`, reloaded
 fresh on every call — no restart needed to pick up edits) before returning the snapshot, so
 muting applies uniformly to `fr24.py`'s poll loop and `skywatch.py`'s one-shot queries alike,
-since both call `fetch_aircraft()` rather than touching `dump1090` directly.
+since both call `fetch_aircraft()` rather than touching `dump1090` directly. This is a manual
+complement to the automatic `is_ground_vehicle()` heuristic below, not a replacement for it —
+`mute.txt` exists for known ground vehicles that evade that heuristic by broadcasting a
+callsign or type despite not being real aircraft.
 
 Each iteration of the loop:
 1. Fetches the current aircraft snapshot (`fetch_aircraft`) from `dump1090`.

@@ -1,5 +1,10 @@
 # skradari mute list — one ICAO hex code per line, case-insensitive.
 # Matching contacts are filtered out of fetch_aircraft() entirely, so both
 # fr24.py's poll loop and skywatch.py's one-shot queries skip them.
+#
+# Entries below are known ground vehicles that evade is_ground_vehicle()'s automatic
+# heuristic (no callsign + no type + low altitude) — these broadcast enough in one of
+# those fields that the heuristic doesn't catch them, so they need a manual entry instead.
+# Carried over from legacy/fr24mute.txt, same reason there.
 4677E9
 46788B
