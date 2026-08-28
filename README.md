@@ -19,6 +19,13 @@ Python 3, no external dependencies (see `requirements.txt`). Requires a reachabl
 python3 fr24.py
 ```
 
+## Mute list
+
+`mute.txt`, next to `fr24.py` — one ICAO hex code per line, case-insensitive, `#` for
+comments. Matching contacts are filtered out entirely in `fetch_aircraft()`, so both
+`fr24.py`'s poll loop and `skywatch.py` skip them. Reloaded fresh on every fetch, so edits
+take effect immediately without restarting anything. Missing file is fine (no mutes).
+
 ## legacy/
 
 The original macOS bash/zsh version of this project (`fr24poll.sh`, `planespot.sh`,

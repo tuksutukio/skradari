@@ -36,6 +36,11 @@ Everything lives in `fr24.py` as one continuous poll loop (`main()`), driven by 
 module-level constants at the top of the file (`DUMP1090_URL`, poll/threshold tuning,
 `ALARM_SQUAWKS`).
 
+`fetch_aircraft()` filters out any hex code listed in `mute.txt` (`load_mute_list()`, reloaded
+fresh on every call — no restart needed to pick up edits) before returning the snapshot, so
+muting applies uniformly to `fr24.py`'s poll loop and `skywatch.py`'s one-shot queries alike,
+since both call `fetch_aircraft()` rather than touching `dump1090` directly.
+
 Each iteration of the loop:
 1. Fetches the current aircraft snapshot (`fetch_aircraft`) from `dump1090`.
 2. Diffs it against the previous snapshot (`known`) to get `entered` and `exited` hex codes.

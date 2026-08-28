@@ -4,8 +4,10 @@ import json
 import sys
 import time
 import urllib.request
+from pathlib import Path
 
 DUMP1090_URL      = "http://192.168.1.131/dump1090/data/aircraft.json"
+MUTE_FILE         = Path(__file__).with_name("mute.txt")
 ADSB_FI_URL       = "https://opendata.adsb.fi/api/v2/hex/{hex}"
 ADSBDB_ROUTE_URL  = "https://api.adsbdb.com/v0/callsign/{callsign}"
 PLANESPOTTERS_URL = "https://www.planespotters.net/search?q={hex}"
@@ -29,15 +31,28 @@ def fetch_json(url):
         return None
 
 
+def load_mute_list():
+    try:
+        lines = MUTE_FILE.read_text().splitlines()
+    except FileNotFoundError:
+        return set()
+    return {
+        line.strip().upper()
+        for line in lines
+        if line.strip() and not line.strip().startswith("#")
+    }
+
+
 def fetch_aircraft():
     data = fetch_json(DUMP1090_URL)
     if not data:
         return None
 
+    muted = load_mute_list()
     aircraft = {}
     for ac in data.get("aircraft", []):
         hex_id = (ac.get("hex") or "").upper().strip()
-        if not hex_id:
+        if not hex_id or hex_id in muted:
             continue
         aircraft[hex_id] = {
             "hex":      hex_id,
