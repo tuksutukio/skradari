@@ -76,3 +76,7 @@ fields, never crash the loop — see `fetch_json`):
 
 `legacy/` holds the original macOS bash/zsh implementation (`fr24poll.sh`, `planespot.sh`,
 `fr24mute.txt`), superseded by `fr24.py` and kept for reference only. Don't extend it.
+
+## Open items
+
+@OPEN.md
